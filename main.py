@@ -1,3 +1,4 @@
+import math
 import random
 import time
 
@@ -12,7 +13,7 @@ from threading import Thread
 
 class Ball:
 
-    def __init__(self, x, y, radius, game):
+    def __init__(self, x, y, radius, color, game):
         self.velX = 0
         self.velY = 0
 
@@ -22,7 +23,7 @@ class Ball:
         self.x_old = x
         self.y_old = y
 
-
+        self.color = color
         self.radius = radius
 
         self.screen = game.screen
@@ -55,7 +56,7 @@ class Ball:
 
     def draw(self):
         pygame.draw.circle(self.screen, (0, 0, 0), (self.x_cur, self.y_cur), self.radius)
-        pygame.draw.circle(self.screen, (255,255,255), (self.x_cur, self.y_cur), self.radius - 1)
+        pygame.draw.circle(self.screen, self.color, (self.x_cur, self.y_cur), self.radius - 1)
 
 class Main():
 
@@ -67,20 +68,21 @@ class Main():
 
         pygame.init()
         self.screen = pygame.display.set_mode((width, height))
-
+        self.dt = 1/60
         clock = pygame.time.Clock()
 
         self.listOfBalls = []
 
-        Thread(target = self.create_balls).start()
-
+        Thread(target=self.create_balls).start()
+        substeps = 2
         running = True
         while running:
 
-            self.apply_gravity()
-            self.update_positions()
-            self.solve_collisions()
-            self.apply_constraints()
+            for i in range(substeps):
+                self.apply_gravity()
+                self.update_positions(self.dt/2)
+                self.solve_collisions()
+                self.apply_constraints()
 
 
             self.screen.fill((0, 0, 0))
@@ -100,12 +102,10 @@ class Main():
                     break
 
     def create_balls(self):
-        for i in range(205):
-            # randX = random.randint(self.width/2 + 200, self.width/2 + 200)
-            # randY = random.randint(self.height/2 - 100, self.height/2 + 100)
-
-            randRadius = random.randint(10, 40)
-            self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius, self))
+        for i in range(300):
+            randRadius = random.randint(10, 30)
+            randColor = self.get_rainbow(time.time())
+            self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius, randColor, self))
             time.sleep(0.05)
 
 
@@ -114,9 +114,9 @@ class Main():
             ball.accelerate(0, 2000)
 
 
-    def update_positions(self):
+    def update_positions(self, dt):
         for ball in self.listOfBalls:
-            ball.update_position(1/60)
+            ball.update_position(dt)
 
 
     def apply_constraints(self):
@@ -151,6 +151,10 @@ class Main():
                     object2.y_cur -= 0.5 * delta * normalized[1]
 
 
-
+    def get_rainbow(self, t):
+        r = math.sin(t)
+        g = math.sin(t + 0.33 * 2.0 * math.pi)
+        b = math.sin(t + 0.66 * 2.0 * math.pi)
+        return 255.0 * r * r, 255.0 * g * g, 255.0 * b * b
 
 newGame = Main(1600, 900)
