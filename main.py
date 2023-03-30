@@ -3,6 +3,7 @@ import random
 import time
 
 import pygame
+import pygame.gfxdraw
 from numba.experimental import jitclass
 from pygame.locals import *
 from threading import Thread
@@ -55,9 +56,9 @@ class Ball:
 
 
     def draw(self):
-        pygame.draw.circle(self.screen, (0, 0, 0), (self.x_cur, self.y_cur), self.radius)
-        pygame.draw.circle(self.screen, self.color, (self.x_cur, self.y_cur), self.radius - 1)
-
+        # pygame.draw.circle(self.screen, self.color, (self.x_cur, self.y_cur), self.radius)
+        pygame.gfxdraw.filled_circle(self.screen, int(self.x_cur), int(self.y_cur), int(self.radius), self.color)
+        pygame.gfxdraw.aacircle(self.screen, int(self.x_cur), int(self.y_cur), int(self.radius), self.color)
 class Main():
 
 
