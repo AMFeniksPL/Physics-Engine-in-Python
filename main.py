@@ -14,18 +14,18 @@ class Ball:
 
         self.pos_cur = numpy.array((x, y))
 
-        self.pos_old = numpy.array((x, y))
+        self.pos_old = self.pos_cur.copy()
 
         self.color = color
         self.radius = radius
 
         self.screen = game.screen
-        self.acceleration = numpy.array((0, 2000))
+        self.acceleration = numpy.array([0, 2000])
 
 
     def update_position(self, dt):
         self.velocity = self.pos_cur - self.pos_old
-        self.pos_old = self.pos_cur
+        self.pos_old = self.pos_cur.copy()
 
         self.pos_cur += self.velocity + (self.acceleration * dt * dt)
 
@@ -67,8 +67,8 @@ class Main():
             for i in range(substeps):
                 self.apply_gravity()
                 self.update_positions(self.dt/2)
-                # self.solve_collisions()
-                # self.apply_constraints()
+                self.solve_collisions()
+                self.apply_constraints()
 
 
             self.screen.fill((0, 0, 0))
@@ -106,15 +106,14 @@ class Main():
 
 
     def apply_constraints(self):
-        center = (self.width/2, self.height/2)
+        center = numpy.array([self.width/2, self.height/2])
         radius = 400
 
         for ball in self.listOfBalls:
-            distance = ((ball.x_cur - center[0]) ** 2 + (ball.y_cur - center[1]) ** 2) ** 0.5
+            distance = numpy.linalg.norm(ball.pos_cur - center)
             if distance > radius - ball.radius:
-                n = ((ball.x_cur - center[0]) / distance, (ball.y_cur - center[1]) / distance)
-                ball.x_cur = center[0] + n[0] * (radius - ball.radius)
-                ball.y_cur = center[1] + n[1] * (radius - ball.radius)
+                n = (ball.pos_cur - center) / distance
+                ball.pos_cur = center + n * (radius - ball.radius)
 
 
     def solve_collisions(self):
@@ -123,18 +122,16 @@ class Main():
                 if object1 == object2:
                     continue
 
-                diff_x = object1.x_cur - object2.x_cur
-                diff_y = object1.y_cur - object2.y_cur
+                diff = object1.pos_cur - object2.pos_cur
 
-                distance = (diff_x ** 2 + diff_y ** 2) ** 0.5 + 0.0001
+                distance = numpy.linalg.norm(diff) + 0.0001
                 if distance < object1.radius + object2.radius:
-                    normalized = (diff_x / distance, diff_y / distance)
+                    normalized = diff / distance
                     delta = object1.radius + object2.radius - distance
-                    object1.x_cur += 0.5 * delta * normalized[0]
-                    object1.y_cur += 0.5 * delta * normalized[1]
 
-                    object2.x_cur -= 0.5 * delta * normalized[0]
-                    object2.y_cur -= 0.5 * delta * normalized[1]
+                    object1.pos_cur += 0.5 * delta * normalized
+                    object2.pos_cur -= 0.5 * delta * normalized
+
 
 
     def get_rainbow(self, t):
