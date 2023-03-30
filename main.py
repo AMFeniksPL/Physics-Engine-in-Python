@@ -54,7 +54,8 @@ class Ball:
 
 
     def draw(self):
-        pygame.draw.circle(self.screen, (255,255,255), (self.x_cur, self.y_cur), self.radius)
+        pygame.draw.circle(self.screen, (0, 0, 0), (self.x_cur, self.y_cur), self.radius)
+        pygame.draw.circle(self.screen, (255,255,255), (self.x_cur, self.y_cur), self.radius - 1)
 
 class Main():
 
@@ -83,7 +84,7 @@ class Main():
 
 
             self.screen.fill((0, 0, 0))
-            pygame.draw.circle(self.screen, (100, 100, 100), (self.width/2, self.height/2), 300)
+            pygame.draw.circle(self.screen, (100, 100, 100), (self.width/2, self.height/2), 400)
             for ball in self.listOfBalls:
                 ball.draw()
 
@@ -99,7 +100,7 @@ class Main():
                     break
 
     def create_balls(self):
-        for i in range(120):
+        for i in range(205):
             # randX = random.randint(self.width/2 + 200, self.width/2 + 200)
             # randY = random.randint(self.height/2 - 100, self.height/2 + 100)
 
@@ -120,7 +121,7 @@ class Main():
 
     def apply_constraints(self):
         center = (self.width/2, self.height/2)
-        radius = 300
+        radius = 400
 
         for ball in self.listOfBalls:
             distance = ((ball.x_cur - center[0]) ** 2 + (ball.y_cur - center[1]) ** 2) ** 0.5
@@ -152,4 +153,4 @@ class Main():
 
 
 
-newGame = Main(1366, 768)
+newGame = Main(1600, 900)
