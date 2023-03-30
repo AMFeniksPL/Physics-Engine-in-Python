@@ -1,52 +1,38 @@
 import math
 import random
 import time
-
+import numpy
 import pygame
 from numba.experimental import jitclass
 from pygame.locals import *
 from threading import Thread
 
-
-
-
-
 class Ball:
 
     def __init__(self, x, y, radius, color, game):
-        self.velX = 0
-        self.velY = 0
+        self.velocity = numpy.array((0, 0))
 
-        self.x_cur = x
-        self.y_cur = y
+        self.pos_cur = numpy.array((x, y))
 
-        self.x_old = x
-        self.y_old = y
+        self.pos_old = numpy.array((x, y))
 
         self.color = color
         self.radius = radius
 
         self.screen = game.screen
-        self.accX = 0
-        self.accY = 1000
+        self.acceleration = numpy.array((0, 2000))
 
 
     def update_position(self, dt):
-        self.velX = self.x_cur - self.x_old
-        self.velY = self.y_cur - self.y_old
+        self.velocity = self.pos_cur - self.pos_old
+        self.pos_old = self.pos_cur
 
-        self.x_old = self.x_cur
-        self.y_old = self.y_cur
+        self.pos_cur += self.velocity + (self.acceleration * dt * dt)
 
-        self.x_cur += self.velX + self.accX * dt * dt
-        self.y_cur += self.velY + self.accY * dt * dt
+        self.acceleration = numpy.zeros(2)
 
-        self.accX = 0
-        self.accY = 0
-
-    def accelerate(self, accX, accY):
-        self.accX += accX
-        self.accY += accY
+    def accelerate(self, acc : numpy.array):
+        self.acceleration += acc
 
 
     def update(self, dt):
@@ -55,8 +41,8 @@ class Ball:
 
 
     def draw(self):
-        pygame.draw.circle(self.screen, (0, 0, 0), (self.x_cur, self.y_cur), self.radius)
-        pygame.draw.circle(self.screen, self.color, (self.x_cur, self.y_cur), self.radius - 1)
+        pygame.draw.circle(self.screen, (0, 0, 0), tuple(self.pos_cur), self.radius)
+        pygame.draw.circle(self.screen, self.color, tuple(self.pos_cur), self.radius - 1)
 
 class Main():
 
@@ -81,8 +67,8 @@ class Main():
             for i in range(substeps):
                 self.apply_gravity()
                 self.update_positions(self.dt/2)
-                self.solve_collisions()
-                self.apply_constraints()
+                # self.solve_collisions()
+                # self.apply_constraints()
 
 
             self.screen.fill((0, 0, 0))
@@ -111,7 +97,7 @@ class Main():
 
     def apply_gravity(self):
         for ball in self.listOfBalls:
-            ball.accelerate(0, 2000)
+            ball.accelerate(numpy.array([0, 2000]))
 
 
     def update_positions(self, dt):
