@@ -2,13 +2,12 @@ import math
 import random
 import time
 
+import numba
 import pygame
 import pygame.gfxdraw
 from numba.experimental import jitclass
 from pygame.locals import *
 from threading import Thread
-
-
 
 
 
@@ -30,7 +29,6 @@ class Ball:
         self.screen = game.screen
         self.accX = 0
         self.accY = 1000
-
 
     def update_position(self, dt):
         self.velX = self.x_cur - self.x_old
@@ -82,7 +80,7 @@ class Main():
         substeps = 4
         running = True
 
-        self.cellSize = 40
+        self.cellSize = 30
 
         self.gridW, self.gridH = int(self.width//self.cellSize) + 1, int(self.height//self.cellSize) + 1
         self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
@@ -113,8 +111,8 @@ class Main():
                     break
 
     def create_balls(self):
-        for i in range(550):
-            randRadius = 11 + (i % 10)
+        for i in range(1200):
+            randRadius = 7 + (i % 8)
             randColor = self.get_rainbow(time.time())
             self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius, randColor, self))
             time.sleep(0.01)
@@ -205,5 +203,6 @@ class Main():
 
                         object2.x_cur -= 0.5 * delta * normalized[0]
                         object2.y_cur -= 0.5 * delta * normalized[1]
+
 
 newGame = Main(1600, 900)
