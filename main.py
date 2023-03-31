@@ -100,13 +100,14 @@ class Main():
 
             physics_time = pygame.time.get_ticks() - physics_time
 
+            render_time = pygame.time.get_ticks()
             self.screen.fill((0, 0, 0))
             pygame.draw.circle(self.screen, (100, 100, 100), (self.width/2, self.height/2), 400)
             for ball in self.listOfBalls:
                 ball.draw()
 
-            # renderowanie grafiki
-            render_time = pygame.time.get_ticks() - physics_time
+            # Stats
+            render_time = pygame.time.get_ticks() - render_time
             fps = int(clock.get_fps())
             font = pygame.font.SysFont(None, 20)
             physics_text = font.render(f"Physics time: {physics_time} ms", True, (255, 255, 255))
