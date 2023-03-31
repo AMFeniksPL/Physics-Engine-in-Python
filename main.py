@@ -8,7 +8,7 @@ import pygame.gfxdraw
 from numba.experimental import jitclass
 from pygame.locals import *
 from threading import Thread
-
+import numpy as np
 
 
 class Ball:
@@ -83,9 +83,13 @@ class Main():
         self.cellSize = 30
 
         self.gridW, self.gridH = int(self.width//self.cellSize) + 1, int(self.height//self.cellSize) + 1
-        self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
+        # self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
+        self.collisionGrid = np.empty((self.gridH, self.gridW, 1), dtype=object)
+        print(self.collisionGrid)
+
 
         while running:
+            physics_time = pygame.time.get_ticks()
             for i in range(substeps):
                 self.apply_gravity()
                 self.add_objects_to_grid()
@@ -94,12 +98,23 @@ class Main():
                 self.apply_constraints()
                 self.update_positions(self.dt / substeps)
 
-
+            physics_time = pygame.time.get_ticks() - physics_time
 
             self.screen.fill((0, 0, 0))
             pygame.draw.circle(self.screen, (100, 100, 100), (self.width/2, self.height/2), 400)
             for ball in self.listOfBalls:
                 ball.draw()
+
+            # renderowanie grafiki
+            render_time = pygame.time.get_ticks() - physics_time
+            fps = int(clock.get_fps())
+            font = pygame.font.SysFont(None, 20)
+            physics_text = font.render(f"Physics time: {physics_time} ms", True, (255, 255, 255))
+            render_text = font.render(f"Render time: {render_time} ms", True, (255, 255, 255))
+            fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
+            self.screen.blit(physics_text, (10, 10))
+            self.screen.blit(render_text, (10, 30))
+            self.screen.blit(fps_text, (10, 50))
 
 
             pygame.display.flip()
@@ -155,13 +170,11 @@ class Main():
                     object2.x_cur -= 0.5 * delta * normalized[0]
                     object2.y_cur -= 0.5 * delta * normalized[1]
 
-
     def get_rainbow(self, t):
         r = math.sin(t)
         g = math.sin(t + 0.33 * 2.0 * math.pi)
         b = math.sin(t + 0.66 * 2.0 * math.pi)
         return 255.0 * r * r, 255.0 * g * g, 255.0 * b * b
-
 
     def add_objects_to_grid(self):
         self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
@@ -172,19 +185,16 @@ class Main():
                 newW = int(self.listOfBalls[i].x_cur // self.cellSize)
                 self.collisionGrid[newH][newW].append(i)
 
-
     def find_collision_grid(self):
         for i in range(1, len(self.collisionGrid) - 1):
             for j in range(1, len(self.collisionGrid[0]) - 1):
                 cell = self.collisionGrid[i][j]
-
                 for di in range(-1, 2):
                     for dj in range(-1, 2):
                         otherCell = self.collisionGrid[i + di][j + dj]
                         self.check_cells_collisions(cell, otherCell)
 
     def check_cells_collisions(self, cell1, cell2):
-
         for i in cell1:
             for j in cell2:
                 object1 = self.listOfBalls[i]
