@@ -88,13 +88,17 @@ class Main():
         clock = pygame.time.Clock()
 
         self.listOfBalls = []
+        self.listOfPreviousBalls = []
+
+        Thread(target=self.check_balls).start()
+        Thread(target=self.import_pos).start()
 
         Thread(target=self.create_balls).start()
         # self.create_balls()
-        substeps = 4
-        running = True
+        substeps = 8
+        self.running = True
 
-        self.cellSize = 20
+        self.cellSize = 48
 
         self.gridW, self.gridH = int(self.width//self.cellSize) + 1, int(self.height//self.cellSize) + 1
         # self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
@@ -102,7 +106,7 @@ class Main():
 
         self.background = pygame.image.load("Phoenix Wallpaper.png")
         self.background = pygame.transform.scale(self.background, (self.width, self.height)).convert_alpha()
-        while running:
+        while self.running:
             physics_time = pygame.time.get_ticks()
             for i in range(substeps):
                 self.apply_gravity()
@@ -123,7 +127,13 @@ class Main():
                 pygame.gfxdraw.aacircle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius), (0, 0, 0))
 
 
+            for ball in self.listOfPreviousBalls:
+                pygame.gfxdraw.aacircle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius), (255, 0, 0))
             self.screen.blit(self.background, (0, 0))
+
+
+
+
             # Stats
             render_time = pygame.time.get_ticks() - render_time
             fps = int(clock.get_fps())
@@ -137,16 +147,19 @@ class Main():
 
 
             pygame.display.flip()
-            clock.tick(60)
+            self.dt = clock.tick(60)/1000
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.running = False
                     break
 
+        input()
+        pygame.quit()
+
     def create_balls(self):
-        for i in range(1200):
-            randRadius = 7 + (i % 8)
+        for i in range(500):
+            randRadius = 7 + (i % 18)
             # randColor = self.get_rainbow(time.time())
             self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius))
             time.sleep(0.01)
@@ -232,6 +245,23 @@ class Main():
 
                         object2.x_cur -= 0.5 * delta * normalized[0]
                         object2.y_cur -= 0.5 * delta * normalized[1]
+
+
+
+    def check_balls(self):
+        time.sleep(20)
+        with open("info_about_balls.txt", "w") as f:
+            for ball in self.listOfBalls:
+                f.write(f"{ball.x_cur} {ball.y_cur} {ball.radius}\n")
+        print("Saving finished")
+        self.running = False
+
+    def import_pos(self):
+        with open("info_about_balls.txt", "r") as f:
+            for line in f.readlines():
+                x, y, radius = line.split()
+                self.listOfPreviousBalls.append(Ball(float(x), float(y), float(radius)))
+
 
 
 newGame = Main(1600, 900)
