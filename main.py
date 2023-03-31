@@ -5,15 +5,29 @@ import time
 import numba
 import pygame
 import pygame.gfxdraw
+from numba import jit
 from numba.experimental import jitclass
 from pygame.locals import *
 from threading import Thread
 import numpy as np
 
 
+
+# spec = [
+#     ('velX', numba.float32),
+#     ('velY', numba.float32),
+#     ('x_cur', numba.float32),
+#     ('y_cur', numba.float32),
+#     ('x_old', numba.float32),
+#     ('y_old', numba.float32),
+#     ('radius', numba.float32),
+#     ('accX', numba.float32),
+#     ('accY', numba.float32),
+# ]
+# @jitclass(spec)
 class Ball:
 
-    def __init__(self, x, y, radius, color, game):
+    def __init__(self, x, y, radius):
         self.velX = 0
         self.velY = 0
 
@@ -23,12 +37,11 @@ class Ball:
         self.x_old = x
         self.y_old = y
 
-        self.color = color
         self.radius = radius
 
-        self.screen = game.screen
         self.accX = 0
         self.accY = 1000
+
 
     def update_position(self, dt):
         self.velX = self.x_cur - self.x_old
@@ -44,6 +57,7 @@ class Ball:
         self.accX = 0
         self.accY = 0
 
+
     def accelerate(self, accX, accY):
         self.accX += accX
         self.accY += accY
@@ -54,10 +68,10 @@ class Ball:
 
 
 
-    def draw(self):
-        # pygame.draw.circle(self.screen, self.color, (self.x_cur, self.y_cur), self.radius)
-        pygame.gfxdraw.filled_circle(self.screen, int(self.x_cur), int(self.y_cur), int(self.radius), self.color)
-        pygame.gfxdraw.aacircle(self.screen, int(self.x_cur), int(self.y_cur), int(self.radius), self.color)
+    # def draw(self):
+    #     # pygame.draw.circle(self.screen, self.color, (self.x_cur, self.y_cur), self.radius)
+    #     pygame.gfxdraw.filled_circle(self.screen, int(self.x_cur), int(self.y_cur), int(self.radius), (255, 255, 255))
+    #     pygame.gfxdraw.aacircle(self.screen, int(self.x_cur), int(self.y_cur), int(self.radius), (0, 0, 0))
 class Main():
 
 
@@ -80,14 +94,14 @@ class Main():
         substeps = 4
         running = True
 
-        self.cellSize = 30
+        self.cellSize = 20
 
         self.gridW, self.gridH = int(self.width//self.cellSize) + 1, int(self.height//self.cellSize) + 1
         # self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
-        self.collisionGrid = np.empty((self.gridH, self.gridW, 1), dtype=object)
-        print(self.collisionGrid)
+        self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
 
-
+        self.background = pygame.image.load("Phoenix Wallpaper.png")
+        self.background = pygame.transform.scale(self.background, (self.width, self.height)).convert_alpha()
         while running:
             physics_time = pygame.time.get_ticks()
             for i in range(substeps):
@@ -104,8 +118,12 @@ class Main():
             self.screen.fill((0, 0, 0))
             pygame.draw.circle(self.screen, (100, 100, 100), (self.width/2, self.height/2), 400)
             for ball in self.listOfBalls:
-                ball.draw()
+                pygame.gfxdraw.filled_circle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius),
+                                             (255, 255, 255))
+                pygame.gfxdraw.aacircle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius), (0, 0, 0))
 
+
+            self.screen.blit(self.background, (0, 0))
             # Stats
             render_time = pygame.time.get_ticks() - render_time
             fps = int(clock.get_fps())
@@ -129,8 +147,8 @@ class Main():
     def create_balls(self):
         for i in range(1200):
             randRadius = 7 + (i % 8)
-            randColor = self.get_rainbow(time.time())
-            self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius, randColor, self))
+            # randColor = self.get_rainbow(time.time())
+            self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius))
             time.sleep(0.01)
 
     def apply_gravity(self):
