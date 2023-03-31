@@ -39,6 +39,7 @@ class Ball:
         self.x_old = self.x_cur
         self.y_old = self.y_cur
 
+
         self.x_cur += self.velX + self.accX * dt * dt
         self.y_cur += self.velY + self.accY * dt * dt
 
@@ -81,7 +82,7 @@ class Main():
         substeps = 4
         running = True
 
-        self.cellSize = 20
+        self.cellSize = 40
 
         self.gridW, self.gridH = int(self.width//self.cellSize) + 1, int(self.height//self.cellSize) + 1
         self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
@@ -112,11 +113,11 @@ class Main():
                     break
 
     def create_balls(self):
-        for i in range(200):
-            randRadius = random.randint(10, 10)
+        for i in range(550):
+            randRadius = 11 + (i % 10)
             randColor = self.get_rainbow(time.time())
             self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius, randColor, self))
-            time.sleep(0.05)
+            time.sleep(0.01)
 
     def apply_gravity(self):
         for ball in self.listOfBalls:
@@ -173,27 +174,14 @@ class Main():
                 newW = int(self.listOfBalls[i].x_cur // self.cellSize)
                 self.collisionGrid[newH][newW].append(i)
 
-            # except Exception as e:
-            #     print(e)
-                # print(self.listOfBalls[i].y_cur, self.listOfBalls[i].x_cur)
-                #
-                # print(int(self.listOfBalls[i].y_cur // self.cellSize), int(self.listOfBalls[i].x_cur // self.cellSize))
-                # print(len(self.collisionGrid), len(self.collisionGrid[0]))
-                #
-                # print(i)
-                # print(len(self.listOfBalls))
-
-        # print(self.collisionGrid)
-        # print(len(self.collisionGrid), " ", len(self.collisionGrid[0]))
-        # print("EDASDASD")
 
     def find_collision_grid(self):
         for i in range(1, len(self.collisionGrid) - 1):
             for j in range(1, len(self.collisionGrid[0]) - 1):
                 cell = self.collisionGrid[i][j]
 
-                for di in range(-1, 1):
-                    for dj in range(-1, 1):
+                for di in range(-1, 2):
+                    for dj in range(-1, 2):
                         otherCell = self.collisionGrid[i + di][j + dj]
                         self.check_cells_collisions(cell, otherCell)
 
