@@ -78,7 +78,7 @@ class Main():
 
         Thread(target=self.create_balls).start()
         # self.create_balls()
-        substeps = 1
+        substeps = 4
         running = True
 
         self.cellSize = 20
@@ -89,11 +89,11 @@ class Main():
         while running:
             for i in range(substeps):
                 self.apply_gravity()
-                self.update_positions(self.dt/substeps)
-                # self.solve_collisions()
                 self.add_objects_to_grid()
                 self.find_collision_grid()
+                # self.solve_collisions()
                 self.apply_constraints()
+                self.update_positions(self.dt / substeps)
 
 
 
