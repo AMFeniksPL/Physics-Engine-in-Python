@@ -1,33 +1,16 @@
 import math
-import random
 import time
 
-import numba
 import pygame
 import pygame.gfxdraw
-from numba import jit
-from numba.experimental import jitclass
-from pygame.locals import *
+
 from threading import Thread
-import numpy as np
+import webbrowser
 
 
-
-# spec = [
-#     ('velX', numba.float32),
-#     ('velY', numba.float32),
-#     ('x_cur', numba.float32),
-#     ('y_cur', numba.float32),
-#     ('x_old', numba.float32),
-#     ('y_old', numba.float32),
-#     ('radius', numba.float32),
-#     ('accX', numba.float32),
-#     ('accY', numba.float32),
-# ]
-# @jitclass(spec)
 class Ball:
 
-    def __init__(self, x, y, radius):
+    def __init__(self, x, y, radius, color):
         self.velX = 0
         self.velY = 0
 
@@ -41,6 +24,8 @@ class Ball:
 
         self.accX = 0
         self.accY = 1000
+
+        self.color = color
 
 
     def update_position(self, dt):
@@ -90,46 +75,68 @@ class Main():
         self.listOfBalls = []
         self.listOfPreviousBalls = []
 
-        Thread(target=self.check_balls).start()
         Thread(target=self.import_pos).start()
 
-        Thread(target=self.create_balls).start()
+        # Thread(target=self.create_balls).start()
         # self.create_balls()
-        substeps = 8
+        substeps = 4
         self.running = True
 
-        self.cellSize = 48
+        self.cellSize = 40
 
         self.gridW, self.gridH = int(self.width//self.cellSize) + 1, int(self.height//self.cellSize) + 1
         # self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
         self.collisionGrid = [[[] for j in range(self.gridW)] for i in range(self.gridH)]
 
-        self.background = pygame.image.load("Phoenix Wallpaper.png")
+        self.background = pygame.image.load("Rick Astley Image.jpg")
         self.background = pygame.transform.scale(self.background, (self.width, self.height)).convert_alpha()
+
+        self.ballCount = 0
+        self.canCreateBall = True
+        self.lastTimeOfBallSpawn = time.time()
+        self.ballTimeDelay = 0.02
+
+
+        self.startGameTime = time.time()
+
+
         while self.running:
             physics_time = pygame.time.get_ticks()
+
+            if self.ballCount < 1000:
+                self.create_ball(self.ballCount)
+                self.lastTimeOfBallSpawn = time.time()
+                self.canCreateBall = False
+
+
+            elif time.time() - self.lastTimeOfBallSpawn > self.ballTimeDelay:
+                self.canCreateBall = True
+
+
+
             for i in range(substeps):
                 self.apply_gravity()
                 self.add_objects_to_grid()
                 self.find_collision_grid()
                 # self.solve_collisions()
                 self.apply_constraints()
-                self.update_positions(self.dt / substeps)
+                self.update_positions((1/60) / substeps)
 
             physics_time = pygame.time.get_ticks() - physics_time
 
             render_time = pygame.time.get_ticks()
             self.screen.fill((0, 0, 0))
             pygame.draw.circle(self.screen, (100, 100, 100), (self.width/2, self.height/2), 400)
-            for ball in self.listOfBalls:
+
+            for ball, ballMeta in zip(self.listOfBalls, self.listOfPreviousBalls):
                 pygame.gfxdraw.filled_circle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius),
-                                             (255, 255, 255))
+                                             ballMeta.color)
                 pygame.gfxdraw.aacircle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius), (0, 0, 0))
 
 
-            for ball in self.listOfPreviousBalls:
-                pygame.gfxdraw.aacircle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius), (255, 0, 0))
-            self.screen.blit(self.background, (0, 0))
+            # for ball in self.listOfPreviousBalls:
+            #     pygame.gfxdraw.aacircle(self.screen, int(ball.x_cur), int(ball.y_cur), int(ball.radius), ball.color)
+            # # self.screen.blit(self.background, (0, 0))
 
 
 
@@ -147,22 +154,35 @@ class Main():
 
 
             pygame.display.flip()
-            self.dt = clock.tick(60)/1000
+            clock.tick(60)
 
+            if time.time() - self.startGameTime > 40:
+                break
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
                     break
 
-        input()
+        self.check_balls()
+        webbrowser.open_new("https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley")
         pygame.quit()
+    #
+    # def create_balls(self):
+    #     for i in range(500):
+    #         randRadius = 7 + (i % 18)
+    #         # randColor = self.get_rainbow(time.time())
+    #         self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius))
+    #         time.sleep(0.01)
 
-    def create_balls(self):
-        for i in range(500):
-            randRadius = 7 + (i % 18)
-            # randColor = self.get_rainbow(time.time())
-            self.listOfBalls.append(Ball(self.width/2 + 200, self.height/2 - 100, randRadius))
-            time.sleep(0.01)
+    def create_ball(self, i):
+            # randRadius = 7 + (i % 18)
+            radius = 12
+            randColor = self.get_rainbow(i)
+            x = self.width/2 + 400 * math.cos(i/20)
+            y = self.height/2 + 400 * math.sin(i/20)
+            self.listOfBalls.append(Ball(x, y, radius, randColor))
+            self.ballCount += 1
+
 
     def apply_gravity(self):
         for ball in self.listOfBalls:
@@ -249,18 +269,20 @@ class Main():
 
 
     def check_balls(self):
-        time.sleep(20)
+        self.screen.blit(self.background, (0, 0))
+        pygame.display.flip()
         with open("info_about_balls.txt", "w") as f:
             for ball in self.listOfBalls:
-                f.write(f"{ball.x_cur} {ball.y_cur} {ball.radius}\n")
+                ball.color = self.screen.get_at((int(ball.x_cur), int(ball.y_cur)))
+                f.write(f"{ball.x_cur} {ball.y_cur} {ball.radius} {ball.color[0]} {ball.color[1]} {ball.color[2]}\n")
+        pygame.image.save(self.screen, "screenshot.jpg")
         print("Saving finished")
-        self.running = False
 
     def import_pos(self):
         with open("info_about_balls.txt", "r") as f:
             for line in f.readlines():
-                x, y, radius = line.split()
-                self.listOfPreviousBalls.append(Ball(float(x), float(y), float(radius)))
+                x, y, radius, r, g, b = line.split()
+                self.listOfPreviousBalls.append(Ball(float(x), float(y), float(radius), (float(r), float(g), float(b))))
 
 
 
