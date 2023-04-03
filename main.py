@@ -7,6 +7,7 @@ import pygame.gfxdraw
 from threading import Thread
 import webbrowser
 
+from multiprocessing import Process, cpu_count
 
 class Ball:
 
@@ -238,6 +239,7 @@ class Main():
                 self.collisionGrid[newH][newW].append(i)
 
     def find_collision_grid(self):
+
         for i in range(1, len(self.collisionGrid) - 1):
             for j in range(1, len(self.collisionGrid[0]) - 1):
                 cell = self.collisionGrid[i][j]
@@ -245,6 +247,8 @@ class Main():
                     for dj in range(-1, 2):
                         otherCell = self.collisionGrid[i + di][j + dj]
                         self.check_cells_collisions(cell, otherCell)
+
+
 
     def check_cells_collisions(self, cell1, cell2):
         for i in cell1:
