@@ -61,8 +61,6 @@ class Ball:
 class Main():
 
 
-
-
     def __init__(self, width, height):
 
         self.width = width
